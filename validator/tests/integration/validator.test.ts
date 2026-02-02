@@ -1,11 +1,4 @@
-/**
- * Integration Tests
- *
- * End-to-end tests for the full validation flow using mock transports.
- * These tests verify that all components work together correctly.
- */
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { OnxValidator } from '../../src/validator.js';
 import {
   createMockTransport,
@@ -13,19 +6,7 @@ import {
   createCompliantToolSet,
   createPartialToolSet,
 } from '../fixtures/index.js';
-import type { McpTransport, McpResponse } from '../../src/transports/base.js';
 import { ONX_TOOLS } from '../../src/schemas/index.js';
-
-// Test helper to create validator with mock transport
-function createTestValidator(transport: McpTransport, transportType: 'stdio' | 'http' = 'stdio') {
-  // Use reflection to access private constructor
-  return (OnxValidator as any).prototype.constructor.call(
-    Object.create(OnxValidator.prototype),
-    transport,
-    transportType,
-    { functionalTests: true, format: 'json', verbose: false }
-  );
-}
 
 describe('OnxValidator Integration', () => {
   describe('full validation flow', () => {
@@ -34,7 +15,6 @@ describe('OnxValidator Integration', () => {
         serverInfo: createServerInfo({ name: 'compliant-server' }),
         tools: createCompliantToolSet(),
         callToolResponse: (name, args) => {
-          // Simulate proper responses for validation tests
           if (name === 'get-inventory' && (!args.skus || (args.skus as unknown[]).length === 0)) {
             return { success: false, error: { code: -32602, message: 'skus required' } };
           }
@@ -51,7 +31,6 @@ describe('OnxValidator Integration', () => {
         },
       });
 
-      // Create validator using static factory (simulate by connecting transport)
       await transport.connect();
       const serverInfo = await transport.getServerInfo();
       const tools = await transport.listTools();
@@ -216,25 +195,6 @@ describe('OnxValidator Integration', () => {
     });
   });
 
-  describe('transport type handling', () => {
-    it('should track stdio transport type', async () => {
-      const transport = createMockTransport();
-      await transport.connect();
-
-      // The factory method would set this
-      const transportType = 'stdio';
-      expect(transportType).toBe('stdio');
-    });
-
-    it('should track http transport type', async () => {
-      const transport = createMockTransport();
-      await transport.connect();
-
-      const transportType = 'http';
-      expect(transportType).toBe('http');
-    });
-  });
-
   describe('error recovery', () => {
     it('should disconnect on validation failure', async () => {
       const transport = createMockTransport();
@@ -243,11 +203,7 @@ describe('OnxValidator Integration', () => {
       await transport.connect();
       expect(transport.isConnected()).toBe(true);
 
-      try {
-        await transport.listTools();
-      } catch {
-        // Expected
-      }
+      await expect(transport.listTools()).rejects.toThrow('Server crashed');
 
       await transport.disconnect();
       expect(transport.isConnected()).toBe(false);
@@ -258,50 +214,17 @@ describe('OnxValidator Integration', () => {
       vi.mocked(transport.disconnect).mockRejectedValue(new Error('Disconnect failed'));
 
       await transport.connect();
-
-      // Should not throw - disconnect errors are usually ignored
       await expect(transport.disconnect()).rejects.toThrow('Disconnect failed');
-    });
-  });
-
-  describe('verbose logging', () => {
-    it('should support verbose option', () => {
-      // Verify verbose option is available
-      const options = {
-        functionalTests: true,
-        format: 'console' as const,
-        verbose: true,
-      };
-
-      expect(options.verbose).toBe(true);
-    });
-  });
-
-  describe('format options', () => {
-    it('should support console format', () => {
-      const options = { format: 'console' as const };
-      expect(options.format).toBe('console');
-    });
-
-    it('should support json format', () => {
-      const options = { format: 'json' as const };
-      expect(options.format).toBe('json');
     });
   });
 });
 
 describe('OnxValidator Factory Methods', () => {
-  describe('forStdio', () => {
-    it('should create validator with stdio config', () => {
-      // This tests the actual factory method exists and has correct signature
-      expect(typeof OnxValidator.forStdio).toBe('function');
-    });
+  it('should have forStdio factory', () => {
+    expect(typeof OnxValidator.forStdio).toBe('function');
   });
 
-  describe('forHttp', () => {
-    it('should create validator with http config', () => {
-      // This tests the actual factory method exists and has correct signature
-      expect(typeof OnxValidator.forHttp).toBe('function');
-    });
+  it('should have forHttp factory', () => {
+    expect(typeof OnxValidator.forHttp).toBe('function');
   });
 });
