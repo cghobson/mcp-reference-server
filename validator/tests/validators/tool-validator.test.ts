@@ -97,8 +97,7 @@ vi.mock('../../src/schemas/index.js', () => ({
     return schemas[toolName] || null;
   }),
   loadCanonicalSchemas: vi.fn(),
-  listCanonicalTools: vi.fn(() => ['cancel-order', 'create-sales-order', 'get-orders']),
-  clearSchemaCache: vi.fn(),
+  listCanonicalTools: vi.fn(() => ['cancel-order', 'create-sales-order', 'get-orders'])
 }));
 
 describe('ToolValidator', () => {

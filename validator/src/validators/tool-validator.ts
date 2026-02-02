@@ -10,7 +10,7 @@ import {
   JSONSchema,
 } from '../types.js';
 import { getCanonicalSchema, ONX_TOOLS } from '../schemas/index.js';
-import { compareSchemas } from '../schemas/comparator.js';
+import { compareSchemas } from './schema-comparator.js';
 
 export class ToolValidator {
   private canonicalSchemas: Map<string, JSONSchema> = new Map();
