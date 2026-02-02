@@ -5,10 +5,8 @@
 
 import { JSONSchema, ValidationResult } from '../types.js';
 
-/**
- * Compare an endpoint's schema against the canonical schema
- * Returns validation results for all differences found
- */
+// Compare an endpoint's schema against the canonical schema
+// Returns validation results for all differences found
 export function compareSchemas(
   toolName: string,
   endpointSchema: JSONSchema,
@@ -100,9 +98,7 @@ export function compareSchemas(
   return results;
 }
 
-/**
- * Compare constraint values (minimum, maximum, minLength, maxLength, pattern, format)
- */
+// Compare constraint values (minimum, maximum, minLength, maxLength, pattern, format)
 function compareConstraints(
   toolName: string,
   endpointSchema: JSONSchema,
@@ -263,23 +259,4 @@ function compareConstraints(
   }
 
   return results;
-}
-
-/**
- * Generate a summary of schema comparison
- */
-export function summarizeComparison(results: ValidationResult[]): {
-  passed: number;
-  failed: number;
-  byCheck: Record<string, number>;
-} {
-  const passed = results.filter(r => r.passed).length;
-  const failed = results.filter(r => !r.passed).length;
-
-  const byCheck: Record<string, number> = {};
-  for (const result of results.filter(r => !r.passed)) {
-    byCheck[result.check] = (byCheck[result.check] || 0) + 1;
-  }
-
-  return { passed, failed, byCheck };
 }
