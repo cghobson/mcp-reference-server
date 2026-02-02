@@ -26,15 +26,8 @@ export class ReportGenerator {
       const funcResults = functionalResults.get(toolResult.tool);
       if (funcResults) {
         const funcErrors = funcResults.filter(r => !r.passed);
-        const funcPassed = funcResults.filter(r => r.passed);
-
         toolResult.errors.push(...funcErrors);
         toolResult.functionalValid = funcErrors.length === 0;
-
-        // Add passed functional tests as passing validations
-        for (const passed of funcPassed) {
-          // Don't add to errors, just mark functional as valid
-        }
       }
     }
 
