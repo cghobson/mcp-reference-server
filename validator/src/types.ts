@@ -67,9 +67,6 @@ export interface ComplianceReport {
   score: number; // 0-100
 }
 
-/**
- * Transport configuration
- */
 export interface StdioTransportConfig {
   type: 'stdio';
   command: string;
