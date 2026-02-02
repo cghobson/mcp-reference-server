@@ -159,3 +159,13 @@ describe('FunctionalValidator', () => {
     });
   });
 });
+
+describe('OnxValidator Factory Methods', () => {
+  it('should have forStdio factory', () => {
+    expect(typeof OnxValidator.forStdio).toBe('function');
+  });
+
+  it('should have forHttp factory', () => {
+    expect(typeof OnxValidator.forHttp).toBe('function');
+  });
+});
