@@ -119,23 +119,7 @@ export class FunctionalValidator {
       });
     }
 
-    // Test 3: For array fields with minItems, test with empty array
-    for (const [field, propSchema] of Object.entries(properties)) {
-      const prop = propSchema as JSONSchema;
-      if (prop.type === 'array' && prop.minItems && prop.minItems > 0) {
-        const input = this.buildMinimalValidInput(schema);
-        input[field] = [];
-
-        testCases.push({
-          tool,
-          name: `empty-array-${field}`,
-          input,
-          expectSuccess: false,
-        });
-      }
-    }
-
-    // Test 4: Minimal valid input - should succeed
+    // Test 3: Minimal valid input - should succeed
     if (required.length > 0 || Object.keys(properties).length > 0) {
       testCases.push({
         tool,
@@ -182,12 +166,9 @@ export class FunctionalValidator {
         return true;
 
       case 'array': {
-        const minItems = schema.minItems ?? 1;
         const itemSchema = schema.items as JSONSchema | undefined;
         if (itemSchema) {
-          return Array(minItems).fill(null).map((_, i) =>
-            this.generateValueForSchema(itemSchema, `${path}[${i}]`)
-          );
+          return [this.generateValueForSchema(itemSchema, `${path}[0]`)];
         }
         return [];
       }

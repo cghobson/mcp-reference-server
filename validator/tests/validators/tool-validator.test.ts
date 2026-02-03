@@ -24,8 +24,8 @@ const MOCK_ONX_TOOLS = [
   'get-returns',
 ];
 
-// Mock the schema index to control what canonical schemas and tools are available
-vi.mock('../../src/schemas/index.js', () => ({
+// Mock @onx/schemas to control what canonical schemas and tools are available
+vi.mock('@onx/schemas', () => ({
   ONX_TOOLS: [
     'create-sales-order',
     'update-order',
@@ -40,7 +40,7 @@ vi.mock('../../src/schemas/index.js', () => ({
     'get-fulfillments',
     'get-returns',
   ],
-  getCanonicalSchema: vi.fn((toolName: string) => {
+  getToolInputSchema: vi.fn((toolName: string) => {
     // Return mock canonical schemas for testing
     const schemas: Record<string, any> = {
       'cancel-order': {
@@ -96,8 +96,6 @@ vi.mock('../../src/schemas/index.js', () => ({
     };
     return schemas[toolName] || null;
   }),
-  loadCanonicalSchemas: vi.fn(),
-  listCanonicalTools: vi.fn(() => ['cancel-order', 'create-sales-order', 'get-orders'])
 }));
 
 describe('ToolValidator', () => {

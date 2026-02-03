@@ -8,7 +8,7 @@
 import { vi } from 'vitest';
 import type { ToolDefinition, ValidationResult, ToolValidationResult } from '../../src/types.js';
 import type { McpTransport, McpResponse, ServerInfo } from '../../src/transports/base.js';
-import { ONX_TOOLS } from '../../src/schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 
 // ============================================================================
 // Server Info Fixtures
