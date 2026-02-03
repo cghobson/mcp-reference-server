@@ -8,13 +8,10 @@ import {
   ToolValidationResult,
   ValidationResult,
 } from '../types.js';
-import { ONX_TOOLS } from '../schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 import { ServerInfo } from '../transports/base.js';
 
 export class ReportGenerator {
-  /**
-   * Generate a compliance report from validation results
-   */
   generate(
     serverInfo: ServerInfo,
     toolResults: ToolValidationResult[],
@@ -31,7 +28,6 @@ export class ReportGenerator {
       }
     }
 
-    // Calculate summary
     const implementedTools = toolResults.filter(t => t.exists);
     const missingTools = ONX_TOOLS.filter(
       name => !toolResults.find(t => t.tool === name && t.exists)
@@ -46,7 +42,6 @@ export class ReportGenerator {
       failedChecks += toolResult.errors.filter(e => !e.passed).length;
       warnings += toolResult.warnings.length;
 
-      // Count existence as a check
       if (toolResult.exists) {
         passedChecks++;
       } else {
@@ -62,7 +57,7 @@ export class ReportGenerator {
     let compliance: 'full' | 'partial' | 'non-compliant';
     if (missingTools.length === 0 && failedChecks === 0) {
       compliance = 'full';
-    } else if (implementedTools.length >= ONX_TOOLS.length / 2) {
+    } else if (implementedTools.length >= 1) {
       compliance = 'partial';
     } else {
       compliance = 'non-compliant';
@@ -86,9 +81,6 @@ export class ReportGenerator {
     };
   }
 
-  /**
-   * Format report as JSON
-   */
   toJSON(report: ComplianceReport): string {
     return JSON.stringify(report, null, 2);
   }

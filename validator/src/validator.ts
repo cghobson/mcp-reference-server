@@ -8,14 +8,11 @@ import { StdioTransport } from './transports/stdio.js';
 import { HttpTransport } from './transports/http.js';
 import { ToolValidator, FunctionalValidator } from './validators/index.js';
 import { ReportGenerator, ConsoleReporter } from './reporters/index.js';
-import { ComplianceReport, StdioTransportConfig, HttpTransportConfig } from './types.js';
+import { ComplianceReport, TransportConfig, StdioTransportConfig, HttpTransportConfig } from './types.js';
 
 export interface ValidatorOptions {
-  /** Run functional tests (calls tools with test data) */
   functionalTests?: boolean;
-  /** Output format */
   format?: 'console' | 'json';
-  /** Verbose output */
   verbose?: boolean;
 }
 
@@ -36,25 +33,22 @@ export class OnxValidator {
     this.options = { ...defaultOptions, ...options };
   }
 
-  /**
-   * Create validator for a stdio-based MCP server
-   */
-  static forStdio(config: StdioTransportConfig, options: ValidatorOptions = {}): OnxValidator {
-    const transport = new StdioTransport(config);
-    return new OnxValidator(transport, 'stdio', options);
+  // Create validator
+  static generate(validatorType: string, config: TransportConfig, options: ValidatorOptions = {}): OnxValidator {
+    let transport: StdioTransport | HttpTransport;
+    switch(validatorType) {
+      case 'stdio':
+        transport = new StdioTransport(config as StdioTransportConfig);
+        return new OnxValidator(transport, 'stdio', options);
+        break;
+      case 'http':
+        transport = new HttpTransport(config as HttpTransportConfig);
+        return new OnxValidator(transport, 'stdio', options);
+        break;
+    }
   }
 
-  /**
-   * Create validator for an HTTP-based MCP server
-   */
-  static forHttp(config: HttpTransportConfig, options: ValidatorOptions = {}): OnxValidator {
-    const transport = new HttpTransport(config);
-    return new OnxValidator(transport, 'http', options);
-  }
-
-  /**
-   * Run the full validation suite
-   */
+  // Run the full validation suite
   async validate(): Promise<ComplianceReport> {
     const toolValidator = new ToolValidator();
     const reportGenerator = new ReportGenerator();

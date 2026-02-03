@@ -4,7 +4,7 @@
  */
 
 import { ComplianceReport, ToolValidationResult } from '../types.js';
-import { ONX_TOOLS } from '../schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 
 // ANSI color codes (will be replaced with chalk in actual implementation)
 const colors = {
@@ -18,9 +18,6 @@ const colors = {
 };
 
 export class ConsoleReporter {
-  /**
-   * Print the full compliance report to console
-   */
   print(report: ComplianceReport): void {
     this.printHeader(report);
     this.printSummary(report);
@@ -44,7 +41,6 @@ export class ConsoleReporter {
   private printSummary(report: ComplianceReport): void {
     const { summary, compliance, score } = report;
 
-    // Compliance badge
     let complianceBadge: string;
     switch (compliance) {
       case 'full':

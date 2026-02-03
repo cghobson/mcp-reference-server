@@ -13,7 +13,7 @@ import {
   createFailingResult,
 } from '../fixtures/index.js';
 import { ToolValidationResult, ValidationResult } from '../../src/types.js';
-import { ONX_TOOLS } from '../../src/schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 
 describe('ReportGenerator', () => {
   let generator: ReportGenerator;
@@ -183,13 +183,12 @@ describe('ReportGenerator', () => {
         expect(report.compliance).toBe('full');
       });
 
-      it('should be "partial" when more than half of tools are implemented', () => {
+      it('should be "non-compliant" when no tools are implemented', () => {
         const serverInfo = createServerInfo();
-        const halfCount = Math.ceil(ONX_TOOLS.length / 2);
         const toolResults: ToolValidationResult[] = ONX_TOOLS.map((tool, index) =>
           createToolValidationResult(tool, {
-            exists: index < halfCount,
-            errors: index >= halfCount
+            exists: index < 0,
+            errors: index >= 0
               ? [createFailingResult(tool, 'tool-exists', `Missing: ${tool}`)]
               : [],
           })
@@ -198,10 +197,10 @@ describe('ReportGenerator', () => {
 
         const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
 
-        expect(report.compliance).toBe('partial');
+        expect(report.compliance).toBe('non-compliant');
       });
 
-      it('should be "non-compliant" when less than half of tools are implemented', () => {
+      it('should be "partial" when any amount of tools are implemented', () => {
         const serverInfo = createServerInfo();
         const toolResults: ToolValidationResult[] = ONX_TOOLS.map((tool, index) =>
           createToolValidationResult(tool, {
@@ -215,7 +214,7 @@ describe('ReportGenerator', () => {
 
         const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
 
-        expect(report.compliance).toBe('non-compliant');
+        expect(report.compliance).toBe('partial');
       });
 
       it('should be "partial" when all tools exist but some checks fail', () => {

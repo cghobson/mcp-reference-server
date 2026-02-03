@@ -42,7 +42,8 @@ program
       }
     }
 
-    const validator = OnxValidator.forStdio(
+    const validator = OnxValidator.generate(
+      'stdio',
       {
         type: 'stdio',
         command,
@@ -100,7 +101,8 @@ program
       }
     }
 
-    const validator = OnxValidator.forHttp(
+    const validator = OnxValidator.generate(
+      'http',
       {
         type: 'http',
         url,
