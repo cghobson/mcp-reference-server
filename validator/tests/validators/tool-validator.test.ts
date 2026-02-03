@@ -6,7 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ToolValidator } from '../../src/validators/tool-validator.js';
-import { createToolDefinition, createCompliantToolSet, createPartialToolSet } from '../fixtures/index.js';
+import { createToolDefinition, createCompliantToolSet } from '../fixtures/index.js';
 
 // Mock tools for testing (matches the fixture tool set)
 const MOCK_ONX_TOOLS = [
@@ -116,7 +116,8 @@ describe('ToolValidator', () => {
     });
 
     it('should fail when required tools are missing', () => {
-      const tools = createPartialToolSet();
+      const allTools = createCompliantToolSet();
+      const tools = allTools.slice(0, Math.ceil(allTools.length / 2));
       const results = validator.validateToolPresence(tools);
 
       const failedResults = results.filter(r => !r.passed);
@@ -337,7 +338,8 @@ describe('ToolValidator', () => {
     });
 
     it('should mark missing tools as not existing', () => {
-      const tools = createPartialToolSet();
+      const allTools = createCompliantToolSet();
+      const tools = allTools.slice(0, Math.ceil(allTools.length / 2));
       const results = validator.validateAll(tools);
 
       const missingResults = results.filter(r => !r.exists);

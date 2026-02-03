@@ -10,10 +10,6 @@ import type { ToolDefinition, ValidationResult, ToolValidationResult } from '../
 import type { McpTransport, McpResponse, ServerInfo } from '../../src/transports/base.js';
 import { ONX_TOOLS } from '@onx/schemas';
 
-// ============================================================================
-// Server Info Fixtures
-// ============================================================================
-
 /**
  * Creates a mock server info object
  */
@@ -25,10 +21,6 @@ export function createServerInfo(overrides: Partial<ServerInfo> = {}): ServerInf
     ...overrides,
   };
 }
-
-// ============================================================================
-// Tool Definition Fixtures
-// ============================================================================
 
 /**
  * Creates a minimal valid tool definition
@@ -229,19 +221,6 @@ export function createCompliantToolSet(): ToolDefinition[] {
 }
 
 /**
- * Creates a partial tool set (missing some required tools)
- * Returns roughly half the required tools
- */
-export function createPartialToolSet(): ToolDefinition[] {
-  const compliantTools = createCompliantToolSet();
-  return compliantTools.slice(0, Math.ceil(compliantTools.length / 2));
-}
-
-// ============================================================================
-// Mock Transport Factory
-// ============================================================================
-
-/**
  * Creates a mock MCP transport for testing
  */
 export function createMockTransport(config: {
@@ -283,13 +262,7 @@ export function createMockTransport(config: {
   };
 }
 
-// ============================================================================
-// Validation Result Fixtures
-// ============================================================================
-
-/**
- * Creates a passing validation result
- */
+// Create passing, failing, and tool validation results
 export function createPassingResult(
   tool: string,
   check: string,
@@ -303,9 +276,6 @@ export function createPassingResult(
   };
 }
 
-/**
- * Creates a failing validation result
- */
 export function createFailingResult(
   tool: string,
   check: string,
@@ -320,10 +290,6 @@ export function createFailingResult(
     details,
   };
 }
-
-/**
- * Creates a tool validation result
- */
 export function createToolValidationResult(
   tool: string,
   config: Partial<ToolValidationResult> = {}
@@ -338,10 +304,6 @@ export function createToolValidationResult(
     ...config,
   };
 }
-
-// ============================================================================
-// HTTP Response Fixtures
-// ============================================================================
 
 /**
  * Creates a mock JSON-RPC response
