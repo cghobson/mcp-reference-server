@@ -4,99 +4,10 @@
  * Tests the tool presence and schema validation logic against canonical schemas.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ToolValidator } from '../../src/validators/tool-validator.js';
 import { createToolDefinition, createCompliantToolSet } from '../fixtures/index.js';
-
-// Mock tools for testing (matches the fixture tool set)
-const MOCK_ONX_TOOLS = [
-  'create-sales-order',
-  'update-order',
-  'cancel-order',
-  'fulfill-order',
-  'create-return',
-  'get-orders',
-  'get-customers',
-  'get-products',
-  'get-product-variants',
-  'get-inventory',
-  'get-fulfillments',
-  'get-returns',
-];
-
-// Mock @onx/schemas to control what canonical schemas and tools are available
-vi.mock('@onx/schemas', () => ({
-  ONX_TOOLS: [
-    'create-sales-order',
-    'update-order',
-    'cancel-order',
-    'fulfill-order',
-    'create-return',
-    'get-orders',
-    'get-customers',
-    'get-products',
-    'get-product-variants',
-    'get-inventory',
-    'get-fulfillments',
-    'get-returns',
-  ],
-  getToolInputSchema: vi.fn((toolName: string) => {
-    // Return mock canonical schemas for testing
-    const schemas: Record<string, any> = {
-      'cancel-order': {
-        type: 'object',
-        properties: {
-          orderId: { type: 'string' },
-          reason: { type: 'string' },
-          notifyCustomer: { type: 'boolean' },
-          notes: { type: 'string' },
-          lineItems: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                sku: { type: 'string', minLength: 1 },
-                quantity: { type: 'number', minimum: 1 },
-              },
-              required: ['sku', 'quantity'],
-            },
-          },
-        },
-        required: ['orderId'],
-      },
-      'create-sales-order': {
-        type: 'object',
-        properties: {
-          order: {
-            type: 'object',
-            properties: {
-              lineItems: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    sku: { type: 'string', minLength: 1 },
-                    quantity: { type: 'number', minimum: 1 },
-                  },
-                  required: ['sku', 'quantity'],
-                },
-              },
-            },
-          },
-        },
-        required: ['order'],
-      },
-      'get-orders': {
-        type: 'object',
-        properties: {
-          ids: { type: 'array' },
-          externalIds: { type: 'array' },
-        },
-      },
-    };
-    return schemas[toolName] || null;
-  }),
-}));
+import { ONX_TOOLS } from '@onx/schemas';
 
 describe('ToolValidator', () => {
   let validator: ToolValidator;
@@ -112,7 +23,7 @@ describe('ToolValidator', () => {
 
       const failedResults = results.filter(r => !r.passed);
       expect(failedResults).toHaveLength(0);
-      expect(results).toHaveLength(MOCK_ONX_TOOLS.length);
+      expect(results).toHaveLength(ONX_TOOLS.length);
     });
 
     it('should fail when required tools are missing', () => {
@@ -155,6 +66,7 @@ describe('ToolValidator', () => {
                 properties: {
                   sku: { type: 'string', minLength: 1 },
                   quantity: { type: 'number', minimum: 1 },
+                  id: { type: 'string' },
                 },
                 required: ['sku', 'quantity'],
               },
@@ -304,22 +216,6 @@ describe('ToolValidator', () => {
       expect(schemaFailure?.passed).toBe(false);
     });
 
-    it('should warn when no canonical schema exists for required tool', () => {
-      // create-return has no canonical schema in our mock
-      const tool = createToolDefinition('create-return', {
-        inputSchema: {
-          type: 'object',
-          properties: {
-            return: { type: 'object' },
-          },
-          required: ['return'],
-        },
-      });
-
-      const results = validator.validateToolSchema(tool);
-
-      expect(results.some(r => r.check === 'schema-no-canonical')).toBe(true);
-    });
   });
 
   describe('validateAll', () => {
@@ -327,10 +223,10 @@ describe('ToolValidator', () => {
       const tools = createCompliantToolSet();
       const results = validator.validateAll(tools);
 
-      expect(results.length).toBeGreaterThanOrEqual(MOCK_ONX_TOOLS.length);
+      expect(results.length).toBeGreaterThanOrEqual(ONX_TOOLS.length);
 
       // Each required tool should have a result
-      for (const requiredTool of MOCK_ONX_TOOLS) {
+      for (const requiredTool of ONX_TOOLS) {
         const result = results.find(r => r.tool === requiredTool);
         expect(result).toBeDefined();
         expect(result?.exists).toBe(true);

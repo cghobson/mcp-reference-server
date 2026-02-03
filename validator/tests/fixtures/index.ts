@@ -41,9 +41,10 @@ export function createToolDefinition(
 }
 
 /**
- * All possible tool definitions (including those without schemas yet)
+ * Fixture definitions for each tool in ONX_TOOLS.
+ * When adding a new tool to ONX_TOOLS, add a corresponding definition here.
  */
-const ALL_TOOL_DEFINITIONS: ToolDefinition[] = [
+const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'create-sales-order',
     description: 'Create a new sales order',
@@ -211,13 +212,18 @@ const ALL_TOOL_DEFINITIONS: ToolDefinition[] = [
 ];
 
 /**
- * Creates a complete set of onX-compliant tool definitions
- * Only includes tools that have canonical schemas (ONX_TOOLS)
+ * Returns tool definitions for all ONX_TOOLS.
+ * Throws if any tool in ONX_TOOLS is missing a fixture definition.
  */
 export function createCompliantToolSet(): ToolDefinition[] {
-  return ALL_TOOL_DEFINITIONS.filter(tool =>
-    ONX_TOOLS.includes(tool.name)
-  );
+  const definitionsByName = new Map(TOOL_DEFINITIONS.map(t => [t.name, t]));
+  const missing = ONX_TOOLS.filter(name => !definitionsByName.has(name));
+
+  if (missing.length > 0) {
+    throw new Error(`Test fixtures missing definitions for: ${missing.join(', ')}`);
+  }
+
+  return ONX_TOOLS.map(name => definitionsByName.get(name)!);
 }
 
 /**
