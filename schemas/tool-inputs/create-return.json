@@ -33,6 +33,10 @@
           "items": {
             "type": "object",
             "properties": {
+              "id": {
+                "description": "Unique identifier for this return line item",
+                "type": "string"
+              },
               "orderLineItemId": {
                 "description": "Reference to the original order line item",
                 "type": "string"
@@ -124,6 +128,18 @@
           "items": {
             "type": "object",
             "properties": {
+              "id": {
+                "description": "Unique exchange line item identifier",
+                "type": "string"
+              },
+              "exchangeOrderId": {
+                "description": "Order ID created for this exchange",
+                "type": "string"
+              },
+              "exchangeOrderName": {
+                "description": "Order number/name for exchange order",
+                "type": "string"
+              },
               "sku": {
                 "description": "Product Variant SKU",
                 "type": "string"
@@ -221,6 +237,11 @@
               "description": "QR code URL for label-free return methods",
               "type": "string",
               "format": "uri"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
             }
           },
           "additionalProperties": false
@@ -278,6 +299,51 @@
           },
           "additionalProperties": false
         },
+        "labels": {
+          "description": "Shipping labels for this return",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "description": "Label lifecycle status",
+                "type": "string"
+              },
+              "carrier": {
+                "description": "Shipping carrier providing the label",
+                "type": "string"
+              },
+              "trackingNumber": {
+                "description": "Tracking number for the return shipment",
+                "type": "string"
+              },
+              "url": {
+                "description": "URL to download the shipping label",
+                "type": "string",
+                "format": "uri"
+              },
+              "rate": {
+                "description": "Shipping cost for this label",
+                "type": "number"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "carrier",
+              "trackingNumber"
+            ],
+            "additionalProperties": false
+          }
+        },
         "locationId": {
           "description": "Warehouse facility identifier where return will be received",
           "type": "string"
@@ -298,6 +364,14 @@
           "description": "Payment method for issuing the refund",
           "type": "string"
         },
+        "refundStatus": {
+          "description": "Payment refund processing status (separate from return status)",
+          "type": "string"
+        },
+        "refundTransactionId": {
+          "description": "Transaction ID for the refund",
+          "type": "string"
+        },
         "shippingRefundAmount": {
           "description": "Amount of original shipping cost being refunded",
           "type": "number"
@@ -310,6 +384,24 @@
           "description": "Total restocking fees charged to customer across all items",
           "type": "number"
         },
+        "requestedAt": {
+          "description": "When return was requested",
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "receivedAt": {
+          "description": "When returned items were received",
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "completedAt": {
+          "description": "When return was fully processed",
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
         "customerNote": {
           "description": "Customer notes about the return",
           "type": "string"
@@ -321,6 +413,15 @@
         "returnInstructions": {
           "description": "Instructions provided to customer",
           "type": "string"
+        },
+        "declineReason": {
+          "description": "Reason if return was declined",
+          "type": "string"
+        },
+        "statusPageUrl": {
+          "description": "Customer-facing status tracking page",
+          "type": "string",
+          "format": "uri"
         },
         "tags": {
           "description": "Tags for categorization and filtering. Useful for organizing entities with custom labels (e.g., \"priority\", \"wholesale\", \"gift\")",
