@@ -33,18 +33,12 @@ export class OnxValidator {
     this.options = { ...defaultOptions, ...options };
   }
 
-  // Create validator
-  static generate(validatorType: string, config: TransportConfig, options: ValidatorOptions = {}): OnxValidator {
-    let transport: StdioTransport | HttpTransport;
-    switch(validatorType) {
+  static create(config: TransportConfig, options: ValidatorOptions = {}): OnxValidator {
+    switch (config.type) {
       case 'stdio':
-        transport = new StdioTransport(config as StdioTransportConfig);
-        return new OnxValidator(transport, 'stdio', options);
-        break;
+        return new OnxValidator(new StdioTransport(config), 'stdio', options);
       case 'http':
-        transport = new HttpTransport(config as HttpTransportConfig);
-        return new OnxValidator(transport, 'stdio', options);
-        break;
+        return new OnxValidator(new HttpTransport(config), 'http', options);
     }
   }
 

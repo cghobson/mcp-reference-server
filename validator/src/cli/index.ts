@@ -42,19 +42,9 @@ program
       }
     }
 
-    const validator = OnxValidator.generate(
-      'stdio',
-      {
-        type: 'stdio',
-        command,
-        args: options.args,
-        env,
-      },
-      {
-        functionalTests: options.functional,
-        format: options.format as 'console' | 'json',
-        verbose: options.verbose,
-      }
+    const validator = OnxValidator.create(
+      { type: 'stdio', command, args: options.args, env },
+      { functionalTests: options.functional, format: options.format as 'console' | 'json', verbose: options.verbose }
     );
 
     try {
@@ -101,18 +91,9 @@ program
       }
     }
 
-    const validator = OnxValidator.generate(
-      'http',
-      {
-        type: 'http',
-        url,
-        headers: Object.keys(headers).length > 0 ? headers : undefined,
-      },
-      {
-        functionalTests: options.functional,
-        format: options.format as 'console' | 'json',
-        verbose: options.verbose,
-      }
+    const validator = OnxValidator.create(
+      { type: 'http', url, headers: Object.keys(headers).length > 0 ? headers : undefined },
+      { functionalTests: options.functional, format: options.format as 'console' | 'json', verbose: options.verbose }
     );
 
     try {
