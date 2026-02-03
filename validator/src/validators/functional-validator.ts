@@ -1,22 +1,18 @@
 /**
  * Functional Validator
  * Tests that tools actually work by calling them with test data
+ * Test cases are generated automatically from JSON schemas
  */
 
 import { McpTransport, McpResponse } from '../transports/base.js';
-import { ValidationResult } from '../types.js';
-import { ONX_TOOLS } from '../schemas/index.js';
-
-type RequiredTool = (typeof ONX_TOOLS)[number];
+import { ValidationResult, JSONSchema } from '../types.js';
+import { ONX_TOOLS, getToolInputSchema } from '@onx/schemas';
 
 interface TestCase {
-  tool: RequiredTool;
+  tool: string;
   name: string;
   input: Record<string, unknown>;
   expectSuccess: boolean;
-  /** If true, accept any response (success or error) - just verify the tool responds */
-  acceptAnyResponse?: boolean;
-  validateResponse?: (response: McpResponse) => ValidationResult | null;
 }
 
 export class FunctionalValidator {
@@ -43,34 +39,14 @@ export class FunctionalValidator {
   /**
    * Run tests for a specific tool
    */
-  async runToolTests(tool: RequiredTool): Promise<ValidationResult[]> {
-    const testCases = this.getTestCases(tool);
+  async runToolTests(tool: string): Promise<ValidationResult[]> {
+    const testCases = this.generateTestCases(tool);
     const results: ValidationResult[] = [];
 
     for (const testCase of testCases) {
       try {
         const response = await this.transport.callTool(testCase.tool, testCase.input);
 
-        // If acceptAnyResponse is true, we just verify the tool responds at all
-        if (testCase.acceptAnyResponse) {
-          // Run custom validation if provided
-          if (testCase.validateResponse) {
-            const customResult = testCase.validateResponse(response);
-            if (customResult) {
-              results.push(customResult);
-              continue;
-            }
-          }
-          results.push({
-            passed: true,
-            tool: testCase.tool,
-            check: `functional-${testCase.name}`,
-            message: `Test "${testCase.name}" passed (tool responded)`,
-          });
-          continue;
-        }
-
-        // Check if response matches expectation
         if (testCase.expectSuccess && !response.success) {
           results.push({
             passed: false,
@@ -88,15 +64,6 @@ export class FunctionalValidator {
             details: { input: testCase.input, response },
           });
         } else {
-          // Basic check passed, run custom validation if provided
-          if (testCase.validateResponse) {
-            const customResult = testCase.validateResponse(response);
-            if (customResult) {
-              results.push(customResult);
-              continue;
-            }
-          }
-
           results.push({
             passed: true,
             tool: testCase.tool,
@@ -119,205 +86,118 @@ export class FunctionalValidator {
   }
 
   /**
-   * Get test cases for a specific tool
+   * Generate test cases automatically from the tool's JSON schema
    */
-  private getTestCases(tool: RequiredTool): TestCase[] {
-    switch (tool) {
-      case 'get-orders':
-        return [
-          {
-            tool: 'get-orders',
-            name: 'empty-query',
-            input: {},
-            expectSuccess: true,
-          },
-          {
-            tool: 'get-orders',
-            name: 'with-pagination',
-            input: { pageSize: 5, skip: 0 },
-            expectSuccess: true,
-          },
-        ];
+  private generateTestCases(tool: string): TestCase[] {
+    const schema = getToolInputSchema(tool) as JSONSchema | null;
+    if (!schema) {
+      return [];
+    }
 
-      case 'get-customers':
-        return [
-          {
-            tool: 'get-customers',
-            name: 'empty-query',
-            input: {},
-            expectSuccess: true,
-          },
-        ];
+    const testCases: TestCase[] = [];
+    const required = schema.required || [];
+    const properties = schema.properties || {};
 
-      case 'get-products':
-        return [
-          {
-            tool: 'get-products',
-            name: 'responds-to-query',
-            input: {},
-            expectSuccess: true,
-            acceptAnyResponse: true, // Accept any response - empty data or not found is OK
-          },
-        ];
+    // Test 1: Empty input - should fail if there are required fields, succeed otherwise
+    testCases.push({
+      tool,
+      name: 'empty-input',
+      input: {},
+      expectSuccess: required.length === 0,
+    });
 
-      case 'get-product-variants':
-        return [
-          {
-            tool: 'get-product-variants',
-            name: 'responds-to-query',
-            input: {},
-            expectSuccess: true,
-            acceptAnyResponse: true, // Accept any response - empty data or not found is OK
-          },
-        ];
+    // Test 2: For each required field, test with it missing
+    for (const field of required) {
+      const minimalValid = this.buildMinimalValidInput(schema);
+      delete minimalValid[field];
 
-      case 'get-inventory':
-        return [
-          {
-            tool: 'get-inventory',
-            name: 'missing-required-sku',
-            input: {},
-            expectSuccess: false, // Should fail - skus is required
-          },
-          {
-            tool: 'get-inventory',
-            name: 'empty-skus-array',
-            input: { skus: [] },
-            expectSuccess: false, // Should fail - at least one SKU required
-          },
-          {
-            tool: 'get-inventory',
-            name: 'valid-sku',
-            input: { skus: ['TEST-SKU-001'] },
-            expectSuccess: true,
-          },
-        ];
+      testCases.push({
+        tool,
+        name: `missing-required-${field}`,
+        input: minimalValid,
+        expectSuccess: false,
+      });
+    }
 
-      case 'get-fulfillments':
-        return [
-          {
-            tool: 'get-fulfillments',
-            name: 'empty-query',
-            input: {},
-            expectSuccess: true,
-          },
-        ];
+    // Test 3: For array fields with minItems, test with empty array
+    for (const [field, propSchema] of Object.entries(properties)) {
+      const prop = propSchema as JSONSchema;
+      if (prop.type === 'array' && prop.minItems && prop.minItems > 0) {
+        const input = this.buildMinimalValidInput(schema);
+        input[field] = [];
 
-      case 'get-returns':
-        return [
-          {
-            tool: 'get-returns',
-            name: 'empty-query',
-            input: {},
-            expectSuccess: true,
-          },
-        ];
+        testCases.push({
+          tool,
+          name: `empty-array-${field}`,
+          input,
+          expectSuccess: false,
+        });
+      }
+    }
 
-      case 'create-sales-order':
-        return [
-          {
-            tool: 'create-sales-order',
-            name: 'missing-order',
-            input: {},
-            expectSuccess: false,
-          },
-          {
-            tool: 'create-sales-order',
-            name: 'missing-line-items',
-            input: {
-              order: {
-                externalId: 'TEST-001',
-              },
-            },
-            expectSuccess: false,
-          },
-          {
-            tool: 'create-sales-order',
-            name: 'valid-minimal-order',
-            input: {
-              order: {
-                externalId: `VALIDATOR-TEST-${Date.now()}`,
-                lineItems: [
-                  {
-                    sku: 'TEST-SKU-001',
-                    quantity: 1,
-                  },
-                ],
-              },
-            },
-            expectSuccess: true,
-            validateResponse: (response) => {
-              if (!response.data) return null;
-              const data = response.data as { content?: Array<{ text?: string }> };
-              const text = data.content?.[0]?.text;
-              if (text && (text.includes('id') || text.includes('order'))) {
-                return null; // Pass
-              }
-              return {
-                passed: false,
-                tool: 'create-sales-order',
-                check: 'functional-valid-minimal-order-response',
-                message: 'Response should contain order ID',
-                details: { response },
-              };
-            },
-          },
-        ];
+    // Test 4: Minimal valid input - should succeed
+    if (required.length > 0 || Object.keys(properties).length > 0) {
+      testCases.push({
+        tool,
+        name: 'minimal-valid-input',
+        input: this.buildMinimalValidInput(schema),
+        expectSuccess: true,
+      });
+    }
 
-      case 'update-order':
-        return [
-          {
-            tool: 'update-order',
-            name: 'missing-id',
-            input: { updates: { status: 'processing' } },
-            expectSuccess: false,
-          },
-          {
-            tool: 'update-order',
-            name: 'missing-updates',
-            input: { id: 'test-id' },
-            expectSuccess: false,
-          },
-        ];
+    return testCases;
+  }
 
-      case 'cancel-order':
-        return [
-          {
-            tool: 'cancel-order',
-            name: 'missing-order-id',
-            input: {},
-            expectSuccess: false,
-          },
-          {
-            tool: 'cancel-order',
-            name: 'nonexistent-order',
-            input: { orderId: 'nonexistent-order-id-12345' },
-            expectSuccess: false, // Should fail with order not found
-          },
-        ];
+  /**
+   * Build a minimal valid input object based on schema requirements
+   */
+  private buildMinimalValidInput(schema: JSONSchema, path = ''): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    const required = schema.required || [];
+    const properties = schema.properties || {};
 
-      case 'fulfill-order':
-        return [
-          {
-            tool: 'fulfill-order',
-            name: 'missing-required-fields',
-            input: {},
-            expectSuccess: false,
-          },
-        ];
+    for (const field of required) {
+      const propSchema = properties[field] as JSONSchema | undefined;
+      if (!propSchema) continue;
 
-      case 'create-return':
-        return [
-          {
-            tool: 'create-return',
-            name: 'missing-return-object',
-            input: {},
-            expectSuccess: false,
-          },
-        ];
+      result[field] = this.generateValueForSchema(propSchema, `${path}.${field}`);
+    }
+
+    return result;
+  }
+
+  /**
+   * Generate a valid value for a given schema type
+   */
+  private generateValueForSchema(schema: JSONSchema, path: string): unknown {
+    switch (schema.type) {
+      case 'string':
+        return `test-${path.replace(/\./g, '-')}`;
+
+      case 'number':
+      case 'integer':
+        return schema.minimum ?? 1;
+
+      case 'boolean':
+        return true;
+
+      case 'array': {
+        const minItems = schema.minItems ?? 1;
+        const itemSchema = schema.items as JSONSchema | undefined;
+        if (itemSchema) {
+          return Array(minItems).fill(null).map((_, i) =>
+            this.generateValueForSchema(itemSchema, `${path}[${i}]`)
+          );
+        }
+        return [];
+      }
+
+      case 'object': {
+        return this.buildMinimalValidInput(schema, path);
+      }
 
       default:
-        return [];
+        return null;
     }
   }
 }

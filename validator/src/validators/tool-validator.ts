@@ -9,21 +9,10 @@ import {
   ToolValidationResult,
   JSONSchema,
 } from '../types.js';
-import { getCanonicalSchema, ONX_TOOLS } from '../schemas/index.js';
+import { ONX_TOOLS, getToolInputSchema } from '@onx/schemas';
 import { compareSchemas } from './schema-comparator.js';
 
 export class ToolValidator {
-  private canonicalSchemas: Map<string, JSONSchema> = new Map();
-
-  constructor() {
-    // Pre-load canonical schemas for required tools
-    for (const toolName of ONX_TOOLS) {
-      const schema = getCanonicalSchema(toolName);
-      if (schema) {
-        this.canonicalSchemas.set(toolName, schema);
-      }
-    }
-  }
 
   /**
    * Validate all required tools are present
@@ -52,7 +41,7 @@ export class ToolValidator {
    */
   validateToolSchema(tool: ToolDefinition): ValidationResult[] {
     const results: ValidationResult[] = [];
-    const canonicalSchema = this.canonicalSchemas.get(tool.name);
+    const canonicalSchema = getToolInputSchema(tool.name) as JSONSchema | null;
 
     // If no canonical schema exists for this tool, it's either:
     // 1. Not a required tool (extra tool) - that's fine
