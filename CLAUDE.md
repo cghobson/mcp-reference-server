@@ -16,6 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Push branches to `origin` only
 - When creating PRs, both base and head must be on `cghobson/mcp-reference-server`
 - Never use `--repo commerce-operations-foundation/mcp-reference-server` with any gh command
+- **ALWAYS run `git status` before staging**. Never use `git add -A` or `git add .` without first checking what will be staged
 
 ## Code Principles
 
