@@ -13,7 +13,7 @@ import {
   createFailingResult,
 } from '../fixtures/index.js';
 import { ToolValidationResult, ValidationResult } from '../../src/types.js';
-import { ONX_TOOLS } from '../../src/schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 
 describe('ReportGenerator', () => {
   let generator: ReportGenerator;

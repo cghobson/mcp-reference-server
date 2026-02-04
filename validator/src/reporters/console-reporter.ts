@@ -4,7 +4,7 @@
  */
 
 import { ComplianceReport, ToolValidationResult } from '../types.js';
-import { ONX_TOOLS } from '../schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 
 // ANSI color codes (will be replaced with chalk in actual implementation)
 const colors = {

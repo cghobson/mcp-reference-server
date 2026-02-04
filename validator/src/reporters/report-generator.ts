@@ -8,7 +8,7 @@ import {
   ToolValidationResult,
   ValidationResult,
 } from '../types.js';
-import { ONX_TOOLS } from '../schemas/index.js';
+import { ONX_TOOLS } from '@onx/schemas';
 import { ServerInfo } from '../transports/base.js';
 
 export class ReportGenerator {
