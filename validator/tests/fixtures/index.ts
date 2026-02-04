@@ -7,7 +7,7 @@
 
 import { vi } from 'vitest';
 import type { ToolDefinition, ValidationResult, ToolValidationResult } from '../../src/types.js';
-import type { McpTransport, McpResponse, ServerInfo } from '../../src/transports/base.js';
+import type { McpTransport, McpToolResult, ServerInfo } from '../../src/transports/base.js';
 import { ONX_TOOLS } from '@onx/schemas';
 
 /**
@@ -232,12 +232,12 @@ export function createCompliantToolSet(): ToolDefinition[] {
 export function createMockTransport(config: {
   serverInfo?: ServerInfo;
   tools?: ToolDefinition[];
-  callToolResponse?: McpResponse | ((name: string, args: Record<string, unknown>) => McpResponse);
+  callToolResponse?: McpToolResult | ((name: string, args: Record<string, unknown>) => McpToolResult);
 } = {}): McpTransport {
   const {
     serverInfo = createServerInfo(),
     tools = createCompliantToolSet(),
-    callToolResponse = { success: true, data: { content: [{ type: 'text', text: 'OK' }] } },
+    callToolResponse = { content: [{ type: 'text', text: 'OK' }], isError: false },
   } = config;
 
   let connected = false;
