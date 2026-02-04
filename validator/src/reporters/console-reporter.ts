@@ -6,7 +6,6 @@
 import { ComplianceReport, ToolValidationResult } from '../types.js';
 import { ONX_TOOLS } from '@onx/schemas';
 
-// ANSI color codes (will be replaced with chalk in actual implementation)
 const colors = {
   green: (s: string) => `\x1b[32m${s}\x1b[0m`,
   red: (s: string) => `\x1b[31m${s}\x1b[0m`,
@@ -84,7 +83,6 @@ export class ConsoleReporter {
       this.printToolResult(toolName, result);
     }
 
-    // Print any extra tools
     const extraTools = report.tools.filter(
       t => !ONX_TOOLS.includes(t.tool as any)
     );
@@ -109,12 +107,10 @@ export class ConsoleReporter {
 
     console.log(`  ${icon} ${toolName} ${status}`);
 
-    // Print errors
     for (const error of result.errors.filter(e => !e.passed)) {
       console.log(`      ${colors.red('└─')} ${error.message}`);
     }
 
-    // Print warnings
     for (const warning of result.warnings) {
       console.log(`      ${colors.yellow('└─')} ${warning.message}`);
     }

@@ -68,7 +68,6 @@ describe('ReportGenerator', () => {
       const toolResults: ToolValidationResult[] = ONX_TOOLS.slice(0, 6).map(tool =>
         createToolValidationResult(tool, { exists: true })
       );
-      // Add missing tools
       for (const tool of ONX_TOOLS.slice(6)) {
         toolResults.push(
           createToolValidationResult(tool, {
@@ -103,7 +102,7 @@ describe('ReportGenerator', () => {
       const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
 
       const getOrdersResult = report.tools.find(t => t.tool === 'get-orders');
-      expect(getOrdersResult?.functionalValid).toBe(false); // Has one failure
+      expect(getOrdersResult?.functionalValid).toBe(false);
       expect(getOrdersResult?.errors).toContainEqual(
         expect.objectContaining({ check: 'functional-test-2' })
       );
@@ -146,8 +145,6 @@ describe('ReportGenerator', () => {
 
       const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
 
-      // 2 passing checks + 1 existence check = 3 passed
-      // 1 failing check = 1 failed
       expect(report.summary.passedChecks).toBe(3);
       expect(report.summary.failedChecks).toBe(1);
     });
@@ -185,12 +182,10 @@ describe('ReportGenerator', () => {
 
       it('should be "non-compliant" when no tools are implemented', () => {
         const serverInfo = createServerInfo();
-        const toolResults: ToolValidationResult[] = ONX_TOOLS.map((tool, index) =>
+        const toolResults: ToolValidationResult[] = ONX_TOOLS.map((tool) =>
           createToolValidationResult(tool, {
-            exists: index < 0,
-            errors: index >= 0
-              ? [createFailingResult(tool, 'tool-exists', `Missing: ${tool}`)]
-              : [],
+            exists: false,
+            errors: [createFailingResult(tool, 'tool-exists', `Missing: ${tool}`)],
           })
         );
         const functionalResults = new Map<string, ValidationResult[]>();
@@ -200,11 +195,11 @@ describe('ReportGenerator', () => {
         expect(report.compliance).toBe('non-compliant');
       });
 
-      it('should be "partial" when any amount of tools are implemented', () => {
+      it('should be "partial" when any tools are implemented', () => {
         const serverInfo = createServerInfo();
         const toolResults: ToolValidationResult[] = ONX_TOOLS.map((tool, index) =>
           createToolValidationResult(tool, {
-            exists: index < 2, // Only 2 tools exist
+            exists: index < 2,
             errors: index >= 2
               ? [createFailingResult(tool, 'tool-exists', `Missing: ${tool}`)]
               : [],
@@ -276,9 +271,6 @@ describe('ReportGenerator', () => {
 
         const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
 
-        // 1 existence + 1 passing = 2 passed
-        // 1 failing = 1 failed
-        // Score = 2/3 = 67%
         expect(report.score).toBe(67);
       });
     });
@@ -304,9 +296,7 @@ describe('ReportGenerator', () => {
       const report = generator.generate(serverInfo, toolResults, functionalResults, 'stdio');
       const json = generator.toJSON(report);
 
-      // Should have newlines from indentation
       expect(json).toContain('\n');
-      // Should have the server info
       expect(json).toContain('"serverInfo"');
     });
 

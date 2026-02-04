@@ -18,7 +18,6 @@ export class ReportGenerator {
     functionalResults: Map<string, ValidationResult[]>,
     transport: 'stdio' | 'http'
   ): ComplianceReport {
-    // Merge functional results into tool results
     for (const toolResult of toolResults) {
       const funcResults = functionalResults.get(toolResult.tool);
       if (funcResults) {
@@ -49,11 +48,9 @@ export class ReportGenerator {
       }
     }
 
-    // Calculate score (0-100)
     const totalChecks = passedChecks + failedChecks;
     const score = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
 
-    // Determine compliance level
     let compliance: 'full' | 'partial' | 'non-compliant';
     if (missingTools.length === 0 && failedChecks === 0) {
       compliance = 'full';

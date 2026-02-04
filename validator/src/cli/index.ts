@@ -31,7 +31,6 @@ program
     format: string;
     verbose?: boolean;
   }) => {
-    // Parse environment variables
     const env: Record<string, string> = {};
     if (options.env) {
       for (const envVar of options.env) {
@@ -50,7 +49,6 @@ program
     try {
       const report = await validator.run();
 
-      // Exit with appropriate code
       if (report.compliance === 'full') {
         process.exit(0);
       } else if (report.compliance === 'partial') {
@@ -78,7 +76,6 @@ program
     format: string;
     verbose?: boolean;
   }) => {
-    // Parse headers
     const headers: Record<string, string> = {};
     if (options.header) {
       for (const header of options.header) {
@@ -99,7 +96,6 @@ program
     try {
       const report = await validator.run();
 
-      // Exit with appropriate code
       if (report.compliance === 'full') {
         process.exit(0);
       } else if (report.compliance === 'partial') {
@@ -113,7 +109,6 @@ program
     }
   });
 
-// Show help if no command provided
 if (process.argv.length < 3) {
   program.help();
 }
