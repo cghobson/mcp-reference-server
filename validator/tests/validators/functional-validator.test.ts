@@ -50,31 +50,32 @@ describe('FunctionalValidator', () => {
 
   describe('runToolTests', () => {
     describe('schema-driven test generation', () => {
-      it('should generate empty-input test for all tools', async () => {
+      it('should generate empty-input test for tools with required fields', async () => {
         await mockTransport.connect();
-        const results = await validator.runToolTests('get-orders');
+        // get-inventory has required field 'skus'
+        const results = await validator.runToolTests('get-inventory');
 
         const emptyInputResult = results.find(r => r.check === 'functional-empty-input');
         expect(emptyInputResult).toBeDefined();
       });
 
-      it('should pass empty-input for tools with no required fields', async () => {
+      it('should NOT generate empty-input test for tools with no required fields', async () => {
         await mockTransport.connect();
         // get-orders has no required fields
         const results = await validator.runToolTests('get-orders');
 
         const emptyInputResult = results.find(r => r.check === 'functional-empty-input');
-        expect(emptyInputResult?.passed).toBe(true);
+        expect(emptyInputResult).toBeUndefined();
       });
 
-      it('should fail empty-input for tools with required fields when server returns error', async () => {
+      it('should pass empty-input when server returns isError: true', async () => {
         mockTransport = createMockTransport({
           callToolResponse: (name, args) => {
-            // get-inventory requires 'skus'
+            // get-inventory requires 'skus' - server should reject empty input
             if (name === 'get-inventory' && !args.skus) {
-              return { success: false, error: { code: -32602, message: 'skus is required' } };
+              return { content: [{ type: 'text', text: 'skus is required' }], isError: true };
             }
-            return { success: true, data: {} };
+            return { content: [{ type: 'text', text: 'OK' }], isError: false };
           },
         });
         validator = new FunctionalValidator(mockTransport);
@@ -82,9 +83,9 @@ describe('FunctionalValidator', () => {
         await mockTransport.connect();
         const results = await validator.runToolTests('get-inventory');
 
-        // empty-input expects failure for get-inventory (has required fields)
+        // empty-input expects isError: true, and we got it
         const emptyInputResult = results.find(r => r.check === 'functional-empty-input');
-        expect(emptyInputResult?.passed).toBe(true); // Test passes because we expected failure and got it
+        expect(emptyInputResult?.passed).toBe(true);
       });
 
       it('should generate missing-required tests for each required field', async () => {
@@ -96,20 +97,65 @@ describe('FunctionalValidator', () => {
         expect(missingSkusResult).toBeDefined();
       });
 
-      it('should generate minimal-valid-input test', async () => {
+      it('should generate schema-valid-input test', async () => {
         await mockTransport.connect();
         const results = await validator.runToolTests('get-inventory');
 
-        const minimalValidResult = results.find(r => r.check === 'functional-minimal-valid-input');
-        expect(minimalValidResult).toBeDefined();
+        const schemaValidResult = results.find(r => r.check === 'functional-schema-valid-input');
+        expect(schemaValidResult).toBeDefined();
       });
 
-      it('should pass minimal-valid-input when server returns success', async () => {
+      it('should pass schema-valid-input for any valid MCP response', async () => {
         await mockTransport.connect();
         const results = await validator.runToolTests('get-inventory');
 
-        const minimalValidResult = results.find(r => r.check === 'functional-minimal-valid-input');
-        expect(minimalValidResult?.passed).toBe(true);
+        // schema-valid-input accepts any response (isError true or false)
+        const schemaValidResult = results.find(r => r.check === 'functional-schema-valid-input');
+        expect(schemaValidResult?.passed).toBe(true);
+      });
+
+      it('should pass schema-valid-input even when server returns isError: true', async () => {
+        mockTransport = createMockTransport({
+          callToolResponse: { content: [{ type: 'text', text: 'Not found' }], isError: true },
+        });
+        validator = new FunctionalValidator(mockTransport);
+
+        await mockTransport.connect();
+        const results = await validator.runToolTests('get-orders');
+
+        // schema-valid-input doesn't care about isError value
+        const schemaValidResult = results.find(r => r.check === 'functional-schema-valid-input');
+        expect(schemaValidResult?.passed).toBe(true);
+      });
+    });
+
+    describe('response validation', () => {
+      it('should fail when response missing content array', async () => {
+        mockTransport = createMockTransport({
+          callToolResponse: { isError: false } as any,
+        });
+        validator = new FunctionalValidator(mockTransport);
+
+        await mockTransport.connect();
+        const results = await validator.runToolTests('get-orders');
+
+        const schemaValidResult = results.find(r => r.check === 'functional-schema-valid-input');
+        expect(schemaValidResult?.passed).toBe(false);
+        expect(schemaValidResult?.message).toContain('content');
+      });
+
+      it('should fail when response missing isError boolean', async () => {
+        mockTransport = createMockTransport({
+          callToolResponse: { content: [] } as any,
+        });
+        validator = new FunctionalValidator(mockTransport);
+
+        await mockTransport.connect();
+        const results = await validator.runToolTests('get-orders');
+
+        const schemaValidResult = results.find(r => r.check === 'functional-schema-valid-input');
+        expect(schemaValidResult?.passed).toBe(false);
+        expect(schemaValidResult?.message).toContain('isError');
       });
     });
 
@@ -127,24 +173,10 @@ describe('FunctionalValidator', () => {
         expect(errorResults[0].message).toContain('exception');
       });
 
-      it('should record failure when expected success but got error', async () => {
-        mockTransport = createMockTransport({
-          callToolResponse: { success: false, error: { code: -1, message: 'Server error' } },
-        });
-        validator = new FunctionalValidator(mockTransport);
-
-        await mockTransport.connect();
-        // get-orders has no required fields, so minimal-valid-input expects success
-        const results = await validator.runToolTests('get-orders');
-
-        const minimalValidResult = results.find(r => r.check === 'functional-minimal-valid-input');
-        expect(minimalValidResult?.passed).toBe(false);
-      });
-
-      it('should record failure when expected error but got success', async () => {
+      it('should fail empty-input when expected isError but got success', async () => {
         // Server incorrectly accepts invalid input
         mockTransport = createMockTransport({
-          callToolResponse: { success: true, data: {} },
+          callToolResponse: { content: [{ type: 'text', text: 'OK' }], isError: false },
         });
         validator = new FunctionalValidator(mockTransport);
 
@@ -152,7 +184,7 @@ describe('FunctionalValidator', () => {
         // create-sales-order requires 'order', so empty-input should fail
         const results = await validator.runToolTests('create-sales-order');
 
-        // empty-input expects failure but server returned success
+        // empty-input expects isError: true but server returned isError: false
         const emptyInputResult = results.find(r => r.check === 'functional-empty-input');
         expect(emptyInputResult?.passed).toBe(false);
       });

@@ -17,9 +17,6 @@ const colors = {
 };
 
 export class ConsoleReporter {
-  /**
-   * Print the full compliance report to console
-   */
   print(report: ComplianceReport): void {
     this.printHeader(report);
     this.printSummary(report);
@@ -43,7 +40,6 @@ export class ConsoleReporter {
   private printSummary(report: ComplianceReport): void {
     const { summary, compliance, score } = report;
 
-    // Compliance badge
     let complianceBadge: string;
     switch (compliance) {
       case 'full':
@@ -87,7 +83,6 @@ export class ConsoleReporter {
       this.printToolResult(toolName, result);
     }
 
-    // Print any extra tools
     const extraTools = report.tools.filter(
       t => !ONX_TOOLS.includes(t.tool as any)
     );
@@ -112,12 +107,10 @@ export class ConsoleReporter {
 
     console.log(`  ${icon} ${toolName} ${status}`);
 
-    // Print errors
     for (const error of result.errors.filter(e => !e.passed)) {
       console.log(`      ${colors.red('└─')} ${error.message}`);
     }
 
-    // Print warnings
     for (const warning of result.warnings) {
       console.log(`      ${colors.yellow('└─')} ${warning.message}`);
     }

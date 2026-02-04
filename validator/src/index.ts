@@ -12,6 +12,6 @@ export {
   HttpTransportConfig,
   TransportConfig,
 } from './types.js';
-export { McpTransport, ServerInfo, McpResponse } from './transports/index.js';
+export { McpTransport, ServerInfo, McpToolResult } from './transports/index.js';
 export { ToolValidator, FunctionalValidator } from './validators/index.js';
 export { ReportGenerator, ConsoleReporter } from './reporters/index.js';

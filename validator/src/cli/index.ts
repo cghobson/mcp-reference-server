@@ -31,7 +31,6 @@ program
     format: string;
     verbose?: boolean;
   }) => {
-    // Parse environment variables
     const env: Record<string, string> = {};
     if (options.env) {
       for (const envVar of options.env) {
@@ -42,24 +41,14 @@ program
       }
     }
 
-    const validator = OnxValidator.forStdio(
-      {
-        type: 'stdio',
-        command,
-        args: options.args,
-        env,
-      },
-      {
-        functionalTests: options.functional,
-        format: options.format as 'console' | 'json',
-        verbose: options.verbose,
-      }
+    const validator = OnxValidator.create(
+      { type: 'stdio', command, args: options.args, env },
+      { functionalTests: options.functional, format: options.format as 'console' | 'json', verbose: options.verbose }
     );
 
     try {
       const report = await validator.run();
 
-      // Exit with appropriate code
       if (report.compliance === 'full') {
         process.exit(0);
       } else if (report.compliance === 'partial') {
@@ -87,7 +76,6 @@ program
     format: string;
     verbose?: boolean;
   }) => {
-    // Parse headers
     const headers: Record<string, string> = {};
     if (options.header) {
       for (const header of options.header) {
@@ -100,23 +88,14 @@ program
       }
     }
 
-    const validator = OnxValidator.forHttp(
-      {
-        type: 'http',
-        url,
-        headers: Object.keys(headers).length > 0 ? headers : undefined,
-      },
-      {
-        functionalTests: options.functional,
-        format: options.format as 'console' | 'json',
-        verbose: options.verbose,
-      }
+    const validator = OnxValidator.create(
+      { type: 'http', url, headers: Object.keys(headers).length > 0 ? headers : undefined },
+      { functionalTests: options.functional, format: options.format as 'console' | 'json', verbose: options.verbose }
     );
 
     try {
       const report = await validator.run();
 
-      // Exit with appropriate code
       if (report.compliance === 'full') {
         process.exit(0);
       } else if (report.compliance === 'partial') {
@@ -130,7 +109,6 @@ program
     }
   });
 
-// Show help if no command provided
 if (process.argv.length < 3) {
   program.help();
 }

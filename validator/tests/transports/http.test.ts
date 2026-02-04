@@ -272,10 +272,8 @@ describe('HttpTransport', () => {
         order: { lineItems: [{ sku: 'ABC', quantity: 1 }] },
       });
 
-      expect(response.success).toBe(true);
-      expect(response.data).toEqual({
-        content: [{ type: 'text', text: 'Order created: ORD-123' }],
-      });
+      expect(response.isError).toBe(false);
+      expect(response.content).toEqual([{ type: 'text', text: 'Order created: ORD-123' }]);
     });
 
     it('should return error response on RPC error', async () => {
@@ -299,9 +297,8 @@ describe('HttpTransport', () => {
       await transport.connect();
       const response = await transport.callTool('create-sales-order', {});
 
-      expect(response.success).toBe(false);
-      expect(response.error?.code).toBe(-32602);
-      expect(response.error?.message).toBe('Invalid params');
+      expect(response.isError).toBe(true);
+      expect(response.content).toEqual([{ type: 'text', text: 'Invalid params' }]);
     });
 
     it('should handle isError in response', async () => {
@@ -330,8 +327,8 @@ describe('HttpTransport', () => {
       await transport.connect();
       const response = await transport.callTool('get-orders', { ids: ['invalid'] });
 
-      expect(response.success).toBe(false);
-      expect(response.error?.message).toBe('Order not found');
+      expect(response.isError).toBe(true);
+      expect(response.content).toEqual([{ type: 'text', text: 'Order not found' }]);
     });
   });
 

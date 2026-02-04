@@ -2,7 +2,7 @@
  * HTTP transport for MCP servers exposing HTTP endpoints
  */
 
-import { McpTransport, McpResponse, ServerInfo, JsonRpcRequest, JsonRpcResponse } from './base.js';
+import { McpTransport, McpToolResult, ServerInfo, JsonRpcRequest, JsonRpcResponse } from './base.js';
 import { ToolDefinition, HttpTransportConfig } from '../types.js';
 
 
@@ -71,19 +71,17 @@ export class HttpTransport implements McpTransport {
     return result.tools || [];
   }
 
-  async callTool(name: string, args: Record<string, unknown>): Promise<McpResponse> {
+  async callTool(name: string, args: Record<string, unknown>): Promise<McpToolResult> {
     const response = await this.sendRequest('tools/call', {
       name,
       arguments: args,
     });
 
     if (response.error) {
+      // JSON-RPC level error - wrap as MCP tool result
       return {
-        success: false,
-        error: {
-          code: response.error.code,
-          message: response.error.message,
-        },
+        content: [{ type: 'text', text: response.error.message }],
+        isError: true,
       };
     }
 
@@ -92,20 +90,9 @@ export class HttpTransport implements McpTransport {
       isError?: boolean;
     };
 
-    if (result.isError) {
-      const errorText = result.content?.find(c => c.type === 'text')?.text || 'Unknown error';
-      return {
-        success: false,
-        error: {
-          code: -1,
-          message: errorText,
-        },
-      };
-    }
-
     return {
-      success: true,
-      data: result,
+      content: result.content || [],
+      isError: result.isError ?? false,
     };
   }
 
