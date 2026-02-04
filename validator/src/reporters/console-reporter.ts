@@ -6,7 +6,6 @@
 import { ComplianceReport, ToolValidationResult } from '../types.js';
 import { ONX_TOOLS } from '@onx/schemas';
 
-// ANSI color codes (will be replaced with chalk in actual implementation)
 const colors = {
   green: (s: string) => `\x1b[32m${s}\x1b[0m`,
   red: (s: string) => `\x1b[31m${s}\x1b[0m`,

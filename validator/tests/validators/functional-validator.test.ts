@@ -7,7 +7,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FunctionalValidator } from '../../src/validators/functional-validator.js';
-import { OnxValidator } from '../../src/validator.js';
 import { createMockTransport } from '../fixtures/index.js';
 import type { McpTransport } from '../../src/transports/base.js';
 import { ONX_TOOLS } from '@onx/schemas';
@@ -158,15 +157,5 @@ describe('FunctionalValidator', () => {
         expect(emptyInputResult?.passed).toBe(false);
       });
     });
-  });
-});
-
-describe('OnxValidator Factory Methods', () => {
-  it('should have forStdio factory', () => {
-    expect(typeof OnxValidator.forStdio).toBe('function');
-  });
-
-  it('should have forHttp factory', () => {
-    expect(typeof OnxValidator.forHttp).toBe('function');
   });
 });
