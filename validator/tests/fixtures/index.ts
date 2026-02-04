@@ -7,7 +7,7 @@
 
 import { vi } from 'vitest';
 import type { ToolDefinition, ValidationResult, ToolValidationResult } from '../../src/types.js';
-import type { McpTransport, McpResponse, ServerInfo } from '../../src/transports/base.js';
+import type { McpTransport, McpToolResult, ServerInfo } from '../../src/transports/base.js';
 import { ONX_TOOLS } from '@onx/schemas';
 
 /**
@@ -41,9 +41,10 @@ export function createToolDefinition(
 }
 
 /**
- * All possible tool definitions (including those without schemas yet)
+ * Fixture definitions for each tool in ONX_TOOLS.
+ * When adding a new tool to ONX_TOOLS, add a corresponding definition here.
  */
-const ALL_TOOL_DEFINITIONS: ToolDefinition[] = [
+const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'create-sales-order',
     description: 'Create a new sales order',
@@ -211,13 +212,18 @@ const ALL_TOOL_DEFINITIONS: ToolDefinition[] = [
 ];
 
 /**
- * Creates a complete set of onX-compliant tool definitions
- * Only includes tools that have canonical schemas (ONX_TOOLS)
+ * Returns tool definitions for all ONX_TOOLS.
+ * Throws if any tool in ONX_TOOLS is missing a fixture definition.
  */
 export function createCompliantToolSet(): ToolDefinition[] {
-  return ALL_TOOL_DEFINITIONS.filter(tool =>
-    ONX_TOOLS.includes(tool.name)
-  );
+  const definitionsByName = new Map(TOOL_DEFINITIONS.map(t => [t.name, t]));
+  const missing = ONX_TOOLS.filter(name => !definitionsByName.has(name));
+
+  if (missing.length > 0) {
+    throw new Error(`Test fixtures missing definitions for: ${missing.join(', ')}`);
+  }
+
+  return ONX_TOOLS.map(name => definitionsByName.get(name)!);
 }
 
 /**
@@ -226,12 +232,12 @@ export function createCompliantToolSet(): ToolDefinition[] {
 export function createMockTransport(config: {
   serverInfo?: ServerInfo;
   tools?: ToolDefinition[];
-  callToolResponse?: McpResponse | ((name: string, args: Record<string, unknown>) => McpResponse);
+  callToolResponse?: McpToolResult | ((name: string, args: Record<string, unknown>) => McpToolResult);
 } = {}): McpTransport {
   const {
     serverInfo = createServerInfo(),
     tools = createCompliantToolSet(),
-    callToolResponse = { success: true, data: { content: [{ type: 'text', text: 'OK' }] } },
+    callToolResponse = { content: [{ type: 'text', text: 'OK' }], isError: false },
   } = config;
 
   let connected = false;
