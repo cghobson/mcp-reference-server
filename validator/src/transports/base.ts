@@ -4,13 +4,9 @@
 
 import { ToolDefinition } from '../types.js';
 
-export interface McpResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: number;
-    message: string;
-  };
+export interface McpToolResult {
+  content: Array<{ type: string; text?: string }>;
+  isError: boolean;
 }
 
 export interface ServerInfo {
@@ -34,7 +30,7 @@ export interface McpTransport {
   listTools(): Promise<ToolDefinition[]>;
 
   // Call a tool with the given arguments
-  callTool(name: string, args: Record<string, unknown>): Promise<McpResponse>;
+  callTool(name: string, args: Record<string, unknown>): Promise<McpToolResult>;
 
   // Check if connected
   isConnected(): boolean;
